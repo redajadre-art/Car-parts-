@@ -1,247 +1,261 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/context/StoreContext";
 import {
   Search,
   ShoppingCart,
   Heart,
   Car,
-  Wrench,
-  SlidersHorizontal,
   Phone,
-  ShieldCheck,
-  ChevronDown,
   LayoutDashboard,
-  X,
-  Sparkles,
+  Globe,
+  Menu,
+  X
 } from "lucide-react";
-import VehicleSelectorModal from "./VehicleSelectorModal";
 
 export default function Navbar() {
-  const {
-    storeSettings,
-    cartCount,
-    setIsCartOpen,
-    wishlist,
-    selectedVehicle,
-    setSelectedVehicle,
-  } = useStore();
+  const router = useRouter();
+  const { settings, cart, wishlist, openVehicleModal, selectedVehicle } = useStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState("ar");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
+  useEffect(() => {
+    const savedLang = localStorage.getItem("app_lang") || "ar";
+    setCurrentLang(savedLang);
+    document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = savedLang;
+  }, []);
+
+  const changeLanguage = (lang: string) => {
+    setCurrentLang(lang);
+    localStorage.setItem("app_lang", lang);
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = lang;
+    window.location.reload();
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/products?search=${encodeURIComponent(
-        searchQuery.trim()
-      )}`;
+    if (searchTerm.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+    } else {
+      router.push("/products");
     }
   };
 
+  const totalCartCount = cart?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+
+  const t = {
+    ar: {
+      allProducts: "كافة قطع الغيار",
+      brakes: "الفرامل والمكابح",
+      engine: "المحرك والبواجي",
+      oils: "الزيوت والفلاتر",
+      suspension: "التعليق والمساعدات",
+      electrical: "الكهرباء والإنارة",
+      searchPlaceholder: "ابحث برقم القطعة (OEM) أو اسم الماركة...",
+      searchBtn: "بحث",
+      selectVehicle: selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "حدد سيارتك للتوافق",
+      myGarage: "كراج سيارتي",
+      cart: "السلة",
+      dashboard: "لوحة التحكم",
+      codNotice: "توصيل سريع لجميع مدن المغرب | الدفع عند الاستلام (COD)",
+      contactUs: "اتصل بنا"
+    },
+    fr: {
+      allProducts: "Toutes les pièces",
+      brakes: "Freinage",
+      engine: "Moteur & Allumage",
+      oils: "Huiles & Filtres",
+      suspension: "Suspension",
+      electrical: "Électricité & Éclairage",
+      searchPlaceholder: "Rechercher par référence OEM ou marque...",
+      searchBtn: "Recherche",
+      selectVehicle: selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "Sélectionnez votre véhicule",
+      myGarage: "Mon Garage",
+      cart: "Panier",
+      dashboard: "Admin",
+      codNotice: "Livraison partout au Maroc | Paiement à la livraison",
+      contactUs: "Contactez-nous"
+    },
+    en: {
+      allProducts: "All Auto Parts",
+      brakes: "Brakes",
+      engine: "Engine & Sparks",
+      oils: "Oils & Filters",
+      suspension: "Suspension",
+      electrical: "Electrical & Lighting",
+      searchPlaceholder: "Search by OEM number or brand...",
+      searchBtn: "Search",
+      selectVehicle: selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "Select Your Vehicle",
+      myGarage: "My Garage",
+      cart: "Cart",
+      dashboard: "Dashboard",
+      codNotice: "Fast Delivery across Morocco | Cash on Delivery",
+      contactUs: "Contact Us"
+    }
+  }[currentLang as "ar" | "fr" | "en"] || {
+    allProducts: "كافة قطع الغيار",
+    brakes: "الفرامل والمكابح",
+    engine: "المحرك والبواجي",
+    oils: "الزيوت والفلاتر",
+    suspension: "التعليق والمساعدات",
+    electrical: "الكهرباء والإنارة",
+    searchPlaceholder: "ابحث برقم القطعة (OEM)...",
+    searchBtn: "بحث",
+    selectVehicle: "حدد سيارتك",
+    myGarage: "كراج سيارتي",
+    cart: "السلة",
+    dashboard: "لوحة التحكم",
+    codNotice: "توصيل سريع لجميع مدن المغرب",
+    contactUs: "اتصل بنا"
+  };
+
+  const navCategories = [
+    { slug: "", label: t.allProducts },
+    { slug: "brakes", label: t.brakes },
+    { slug: "engine", label: t.engine },
+    { slug: "oils-filters", label: t.oils },
+    { slug: "suspension", label: t.suspension },
+    { slug: "electrical-lighting", label: t.electrical },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 bg-slate-900 text-white shadow-xl">
-      {/* Announcement Bar */}
-      {storeSettings?.announcementEnabled && storeSettings.announcementBarText && (
-        <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white text-xs md:text-sm py-2 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2 shadow-inner">
-          <Sparkles className="w-4 h-4 animate-pulse shrink-0" />
-          <span>{storeSettings.announcementBarText}</span>
-        </div>
-      )}
-
-      {/* Main Top Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-        <div className="flex items-center justify-between gap-4">
-          
-          {/* Logo & Branding */}
-          <Link href="/" className="flex items-center gap-3 shrink-0 group">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-red-600 to-amber-500 p-0.5 shadow-lg group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Wrench className="w-5 h-5 md:w-6 md:h-6 text-red-500 group-hover:rotate-12 transition-transform" />
-              </div>
-            </div>
-            <div>
-              <span className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-1.5">
-                {storeSettings?.storeNameAr || "قطع غيار بلس"}
-              </span>
-              <span className="block text-[11px] text-amber-400 font-semibold tracking-wider uppercase">
-                {storeSettings?.sloganAr ? storeSettings.sloganAr.substring(0, 32) + "..." : "متجر قطع السيارات المعتمد"}
-              </span>
-            </div>
-          </Link>
-
-          {/* Quick Search Bar (Search by OEM Number or Name) */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl relative">
-            <div className="relative w-full">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث برقم القطعة (OEM) مثل: 90919-02258 أو باسم القطعة..."
-                className="w-full bg-slate-800 text-white placeholder-slate-400 text-sm rounded-xl py-2.5 pr-10 pl-24 border border-slate-700 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <button
-                type="submit"
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1.5 px-3.5 rounded-lg transition-colors shadow-sm"
-              >
-                بحث
-              </button>
-            </div>
-          </form>
-
-          {/* Right Action Icons & Vehicle Selector */}
-          <div className="flex items-center gap-2 md:gap-3">
-            
-            {/* Vehicle Garage Button */}
+    <header className="w-full bg-[#0b1120] text-white sticky top-0 z-50 shadow-md border-b border-gray-800">
+      {/* Top Banner */}
+      <div className="bg-red-600 text-xs py-1.5 px-4 text-center font-medium flex justify-between items-center max-w-7xl mx-auto">
+        <span className="truncate">{settings?.announcement_bar_text || t.codNotice}</span>
+        <div className="flex items-center gap-4 text-white">
+          <a href="tel:+212769381637" className="hidden sm:flex items-center gap-1 hover:underline">
+            <Phone className="w-3.5 h-3.5" />
+            <span dir="ltr">0769381637</span>
+          </a>
+          {/* Language Switcher */}
+          <div className="flex items-center gap-1 bg-red-700 px-2 py-0.5 rounded text-[11px]">
+            <Globe className="w-3 h-3 text-red-200" />
             <button
-              onClick={() => setIsVehicleModalOpen(true)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs md:text-sm font-medium transition-all ${
-                selectedVehicle
-                  ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900"
-                  : "bg-slate-800/80 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600"
-              }`}
+              onClick={() => changeLanguage("ar")}
+              className={`px-1 rounded ${currentLang === "ar" ? "font-bold underline" : "opacity-80"}`}
             >
-              <Car className={`w-4 h-4 ${selectedVehicle ? "text-emerald-400 animate-bounce" : "text-amber-400"}`} />
-              <div className="text-right hidden sm:block">
-                <span className="block text-[10px] text-slate-400">كراج سيارتي</span>
-                <span className="font-bold text-xs">
-                  {selectedVehicle
-                    ? `${selectedVehicle.make} ${selectedVehicle.model} ${selectedVehicle.year}`
-                    : "حدد سيارتك للتوافق"}
-                </span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+              العربية
             </button>
-
-            {/* Wishlist Icon */}
-            <Link
-              href="/products?wishlist=true"
-              className="relative p-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-              title="المفضلة"
-            >
-              <Heart className="w-5 h-5" />
-              {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {wishlist.length}
-                </span>
-              )}
-            </Link>
-
-            {/* Cart Drawer Trigger */}
+            <span>|</span>
             <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative flex items-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm shadow-md transition-all transform active:scale-95"
+              onClick={() => changeLanguage("fr")}
+              className={`px-1 rounded ${currentLang === "fr" ? "font-bold underline" : "opacity-80"}`}
             >
-              <ShoppingCart className="w-5 h-5" />
-              <span className="hidden sm:inline">السلة</span>
-              {cartCount > 0 && (
-                <span className="bg-white text-red-600 text-xs font-black px-2 py-0.5 rounded-full shadow">
-                  {cartCount}
-                </span>
-              )}
+              FR
             </button>
-
-            {/* Admin Dashboard Entry Button */}
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl text-xs md:text-sm font-bold transition-all"
-            >
-              <LayoutDashboard className="w-4 h-4 text-amber-400" />
-              <span className="hidden lg:inline">لوحة التحكم</span>
-            </Link>
-
-          </div>
-        </div>
-
-        {/* Mobile Search Bar */}
-        <form onSubmit={handleSearch} className="mt-3 md:hidden">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ابحث برقم القطعة OEM أو الاسم..."
-              className="w-full bg-slate-800 text-white placeholder-slate-400 text-xs rounded-xl py-2 pr-9 pl-16 border border-slate-700 focus:outline-none focus:border-red-500"
-            />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <span>|</span>
             <button
-              type="submit"
-              className="absolute left-1 top-1/2 -translate-y-1/2 bg-red-600 text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg"
+              onClick={() => changeLanguage("en")}
+              className={`px-1 rounded ${currentLang === "en" ? "font-bold underline" : "opacity-80"}`}
             >
-              بحث
+              EN
             </button>
           </div>
-        </form>
+        </div>
       </div>
 
-      {/* Sub Navigation Bar */}
-      <nav className="border-t border-slate-800/80 bg-slate-950/70 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between overflow-x-auto scrollbar-none py-2.5 text-xs md:text-sm font-medium">
-            <div className="flex items-center gap-1 md:gap-6 whitespace-nowrap">
-              <Link
-                href="/products"
-                className="text-slate-200 hover:text-red-400 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1.5 font-bold"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-red-500" />
-                كافة قطع الغيار
-              </Link>
-              <Link
-                href="/products?category=brakes"
-                className="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
-              >
-                الفرامل والمكابح
-              </Link>
-              <Link
-                href="/products?category=engine"
-                className="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
-              >
-                المحرك والبواجي
-              </Link>
-              <Link
-                href="/products?category=oils-filters"
-                className="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
-              >
-                الزيوت والفلاتر
-              </Link>
-              <Link
-                href="/products?category=suspension"
-                className="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
-              >
-                التعليق والمساعدات
-              </Link>
-              <Link
-                href="/products?category=electrical-lighting"
-                className="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
-              >
-                الكهرباء والإنارة LED
-              </Link>
-            </div>
-
-            <div className="hidden lg:flex items-center gap-4 text-xs text-slate-400 shrink-0">
-              <Link href="/orders/track" className="hover:text-amber-400 transition-colors flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                تتبع حالة الطلب
-              </Link>
-              {storeSettings?.phoneNumber && (
-                <a href={`tel:${storeSettings.phoneNumber}`} className="hover:text-amber-400 transition-colors flex items-center gap-1">
-                  <Phone className="w-3.5 h-3.5 text-amber-400" />
-                  {storeSettings.phoneNumber}
-                </a>
-              )}
-            </div>
+      {/* Main Header */}
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <div className="bg-red-600 p-2 rounded-lg text-white font-black text-xl">CP</div>
+          <div>
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white block">
+              CarParts<span className="text-red-500">.MA</span>
+            </span>
+            <span className="text-[10px] text-gray-400 block -mt-1">المغرب Auto Pièces</span>
           </div>
+        </Link>
+
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-xl hidden md:flex items-center relative">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={t.searchPlaceholder}
+            className="w-full bg-gray-900 border border-gray-700 rounded-lg py-2 px-4 text-sm text-white focus:outline-none focus:border-red-500"
+          />
+          <button
+            type="submit"
+            className="absolute left-1 top-1 bottom-1 bg-red-600 hover:bg-red-700 text-white px-4 rounded-md text-xs font-semibold flex items-center gap-1 rtl:left-1 rtl:right-auto ltr:right-1 ltr:left-auto"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>{t.searchBtn}</span>
+          </button>
+        </form>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-3">
+          {/* Garage Selector */}
+          <button
+            onClick={openVehicleModal}
+            className="hidden lg:flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-3 py-1.5 rounded-lg text-xs"
+          >
+            <Car className="w-4 h-4 text-amber-400" />
+            <div className="text-right rtl:text-right ltr:text-left">
+              <span className="text-[10px] text-gray-400 block">{t.myGarage}</span>
+              <span className="font-bold text-gray-100 max-w-[130px] truncate block">{t.selectVehicle}</span>
+            </div>
+          </button>
+
+          {/* Wishlist */}
+          <Link href="/wishlist" className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 relative">
+            <Heart className="w-5 h-5" />
+            {(wishlist?.length || 0) > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center text-white">
+                {wishlist.length}
+              </span>
+            )}
+          </Link>
+
+          {/* Cart */}
+          <Link href="/cart" className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm font-semibold">
+            <ShoppingCart className="w-4 h-4" />
+            <span>{t.cart}</span>
+            <span className="bg-black/30 px-1.5 py-0.5 rounded text-xs">{totalCartCount}</span>
+          </Link>
+
+          {/* Dashboard */}
+          <Link href="/admin" className="hidden sm:flex items-center gap-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-2.5 py-2 rounded-lg text-xs text-gray-300">
+            <LayoutDashboard className="w-4 h-4 text-blue-400" />
+            <span className="hidden md:inline">{t.dashboard}</span>
+          </Link>
+
+          {/* Mobile menu trigger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-300"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Categories Bar */}
+      <nav className="bg-[#111827] border-t border-gray-800/80 px-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-1 sm:gap-2 overflow-x-auto py-2 text-xs font-medium no-scrollbar">
+          {navCategories.map((item) => {
+            const href = item.slug ? `/products?category=${item.slug}` : "/products";
+            return (
+              <Link
+                key={item.slug || "all"}
+                href={href}
+                className="whitespace-nowrap px-3 py-1.5 rounded-md hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
-
-      {/* Vehicle Selector Modal */}
-      <VehicleSelectorModal
-        isOpen={isVehicleModalOpen}
-        onClose={() => setIsVehicleModalOpen(false)}
-      />
     </header>
   );
 }
