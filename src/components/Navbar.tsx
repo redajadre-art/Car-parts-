@@ -18,7 +18,7 @@ import {
 
 export default function Navbar() {
   const router = useRouter();
-  const { settings, cart, wishlist, openVehicleModal, selectedVehicle } = useStore();
+  const { cart, wishlist, openVehicleModal, selectedVehicle } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState("ar");
@@ -47,7 +47,7 @@ export default function Navbar() {
     }
   };
 
-  const totalCartCount = cart?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+  const totalCartCount = (cart as any[])?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
 
   const t = {
     ar: {
@@ -59,7 +59,7 @@ export default function Navbar() {
       electrical: "الكهرباء والإنارة",
       searchPlaceholder: "ابحث برقم القطعة (OEM) أو اسم الماركة...",
       searchBtn: "بحث",
-      selectVehicle: selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "حدد سيارتك للتوافق",
+      selectVehicle: selectedVehicle ? `${(selectedVehicle as any).make} ${(selectedVehicle as any).model}` : "حدد سيارتك للتوافق",
       myGarage: "كراج سيارتي",
       cart: "السلة",
       dashboard: "لوحة التحكم",
@@ -75,7 +75,7 @@ export default function Navbar() {
       electrical: "Électricité & Éclairage",
       searchPlaceholder: "Rechercher par référence OEM ou marque...",
       searchBtn: "Recherche",
-      selectVehicle: selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "Sélectionnez votre véhicule",
+      selectVehicle: selectedVehicle ? `${(selectedVehicle as any).make} ${(selectedVehicle as any).model}` : "Sélectionnez votre véhicule",
       myGarage: "Mon Garage",
       cart: "Panier",
       dashboard: "Admin",
@@ -91,7 +91,7 @@ export default function Navbar() {
       electrical: "Electrical & Lighting",
       searchPlaceholder: "Search by OEM number or brand...",
       searchBtn: "Search",
-      selectVehicle: selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "Select Your Vehicle",
+      selectVehicle: selectedVehicle ? `${(selectedVehicle as any).make} ${(selectedVehicle as any).model}` : "Select Your Vehicle",
       myGarage: "My Garage",
       cart: "Cart",
       dashboard: "Dashboard",
@@ -128,7 +128,7 @@ export default function Navbar() {
     <header className="w-full bg-[#0b1120] text-white sticky top-0 z-50 shadow-md border-b border-gray-800">
       {/* Top Banner */}
       <div className="bg-red-600 text-xs py-1.5 px-4 text-center font-medium flex justify-between items-center max-w-7xl mx-auto">
-        <span className="truncate">{settings?.announcement_bar_text || t.codNotice}</span>
+        <span className="truncate">{t.codNotice}</span>
         <div className="flex items-center gap-4 text-white">
           <a href="tel:+212769381637" className="hidden sm:flex items-center gap-1 hover:underline">
             <Phone className="w-3.5 h-3.5" />
@@ -138,6 +138,7 @@ export default function Navbar() {
           <div className="flex items-center gap-1 bg-red-700 px-2 py-0.5 rounded text-[11px]">
             <Globe className="w-3 h-3 text-red-200" />
             <button
+              type="button"
               onClick={() => changeLanguage("ar")}
               className={`px-1 rounded ${currentLang === "ar" ? "font-bold underline" : "opacity-80"}`}
             >
@@ -145,6 +146,7 @@ export default function Navbar() {
             </button>
             <span>|</span>
             <button
+              type="button"
               onClick={() => changeLanguage("fr")}
               className={`px-1 rounded ${currentLang === "fr" ? "font-bold underline" : "opacity-80"}`}
             >
@@ -152,6 +154,7 @@ export default function Navbar() {
             </button>
             <span>|</span>
             <button
+              type="button"
               onClick={() => changeLanguage("en")}
               className={`px-1 rounded ${currentLang === "en" ? "font-bold underline" : "opacity-80"}`}
             >
@@ -196,6 +199,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* Garage Selector */}
           <button
+            type="button"
             onClick={openVehicleModal}
             className="hidden lg:flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-3 py-1.5 rounded-lg text-xs"
           >
@@ -209,9 +213,9 @@ export default function Navbar() {
           {/* Wishlist */}
           <Link href="/wishlist" className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 relative">
             <Heart className="w-5 h-5" />
-            {(wishlist?.length || 0) > 0 && (
+            {((wishlist as any[])?.length || 0) > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center text-white">
-                {wishlist.length}
+                {(wishlist as any[]).length}
               </span>
             )}
           </Link>
@@ -231,6 +235,7 @@ export default function Navbar() {
 
           {/* Mobile menu trigger */}
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 text-gray-300"
           >
