@@ -18,24 +18,32 @@ import {
 
 export default function Navbar() {
   const router = useRouter();
-  const { cart, wishlist, openVehicleModal, selectedVehicle } = useStore();
+  const store = (useStore() || {}) as any;
+  const cart = store.cart || [];
+  const wishlist = store.wishlist || [];
+  const selectedVehicle = store.selectedVehicle || null;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState("ar");
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("app_lang") || "ar";
+    const savedLang = typeof window !== "undefined" ? localStorage.getItem("app_lang") || "ar" : "ar";
     setCurrentLang(savedLang);
-    document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = savedLang;
+    if (typeof document !== "undefined") {
+      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
+      document.documentElement.lang = savedLang;
+    }
   }, []);
 
   const changeLanguage = (lang: string) => {
     setCurrentLang(lang);
-    localStorage.setItem("app_lang", lang);
-    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = lang;
-    window.location.reload();
+    if (typeof window !== "undefined") {
+      localStorage.setItem("app_lang", lang);
+      document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      document.documentElement.lang = lang;
+      window.location.reload();
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -47,7 +55,19 @@ export default function Navbar() {
     }
   };
 
-  const totalCartCount = (cart as any[])?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+  const totalCartCount = Array.isArray(cart)
+    ? cart.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0)
+    : 0;
+
+  const handleGarageClick = () => {
+    if (typeof store.openVehicleModal === "function") {
+      store.openVehicleModal();
+    } else if (typeof store.setIsVehicleModalOpen === "function") {
+      store.setIsVehicleModalOpen(true);
+    } else {
+      router.push("/products");
+    }
+  };
 
   const t = {
     ar: {
@@ -59,7 +79,7 @@ export default function Navbar() {
       electrical: "الكهرباء والإنارة",
       searchPlaceholder: "ابحث برقم القطعة (OEM) أو اسم الماركة...",
       searchBtn: "بحث",
-      selectVehicle: selectedVehicle ? `${(selectedVehicle as any).make} ${(selectedVehicle as any).model}` : "حدد سيارتك للتوافق",
+      selectVehicle: selectedVehicle ? `${selectedVehicle.make || ""} ${selectedVehicle.model || ""}` : "حدد سيارتك للتوافق",
       myGarage: "كراج سيارتي",
       cart: "السلة",
       dashboard: "لوحة التحكم",
@@ -75,7 +95,7 @@ export default function Navbar() {
       electrical: "Électricité & Éclairage",
       searchPlaceholder: "Rechercher par référence OEM ou marque...",
       searchBtn: "Recherche",
-      selectVehicle: selectedVehicle ? `${(selectedVehicle as any).make} ${(selectedVehicle as any).model}` : "Sélectionnez votre véhicule",
+      selectVehicle: selectedVehicle ? `${selectedVehicle.make || ""} ${selectedVehicle.model || ""}` : "Sélectionnez votre véhicule",
       myGarage: "Mon Garage",
       cart: "Panier",
       dashboard: "Admin",
@@ -91,7 +111,7 @@ export default function Navbar() {
       electrical: "Electrical & Lighting",
       searchPlaceholder: "Search by OEM number or brand...",
       searchBtn: "Search",
-      selectVehicle: selectedVehicle ? `${(selectedVehicle as any).make} ${(selectedVehicle as any).model}` : "Select Your Vehicle",
+      selectVehicle: selectedVehicle ? `${selectedVehicle.make || ""} ${selectedVehicle.model || ""}` : "Select Your Vehicle",
       myGarage: "My Garage",
       cart: "Cart",
       dashboard: "Dashboard",
@@ -200,7 +220,7 @@ export default function Navbar() {
           {/* Garage Selector */}
           <button
             type="button"
-            onClick={openVehicleModal}
+            onClick={handleGarageClick}
             className="hidden lg:flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-3 py-1.5 rounded-lg text-xs"
           >
             <Car className="w-4 h-4 text-amber-400" />
@@ -213,9 +233,9 @@ export default function Navbar() {
           {/* Wishlist */}
           <Link href="/wishlist" className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 relative">
             <Heart className="w-5 h-5" />
-            {((wishlist as any[])?.length || 0) > 0 && (
+            {wishlist.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center text-white">
-                {(wishlist as any[]).length}
+                {wishlist.length}
               </span>
             )}
           </Link>
